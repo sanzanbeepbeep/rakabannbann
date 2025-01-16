@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ConfigProvider } from "antd";
+import { input } from "motion/react-client";
 
 export function Providers({
   children,
@@ -35,6 +36,11 @@ export function Providers({
           colorTextBase: isDarkMode ? "#ffffff" : "#000000", // Text color
           colorPrimaryHover: isDarkMode ? "#ffffff" : "#000000", // Hover primary color
         },
+        components: {
+          InputNumber:{
+            activeBorderColor: isDarkMode ? "#ffffff" : "#000000",
+          }
+        }
       }}
     >
       {children}
