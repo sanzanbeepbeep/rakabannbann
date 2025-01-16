@@ -18,7 +18,7 @@ export default function Home() {
           <h2 className="text-2xl font-semibold mb-6">
             Your Intelligent House Price Prediction Tool
           </h2>
-          <Button type="primary" className="text-lg" onClick={navigateToMain}>
+          <Button type="default" variant="filled" className="text-lg" onClick={navigateToMain}>
             Explore Now
           </Button>
         </div>

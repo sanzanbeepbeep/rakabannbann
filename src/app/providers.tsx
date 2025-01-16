@@ -30,9 +30,10 @@ export function Providers({
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: isDarkMode ? "#ff4d4f" : "#1677ff", // Dynamic primary color
+          colorPrimary: isDarkMode ? "#000000" : "#ffffff", // Dynamic primary color
           colorBgBase: isDarkMode ? "#000000" : "#ffffff", // Background color
           colorTextBase: isDarkMode ? "#ffffff" : "#000000", // Text color
+          colorPrimaryHover: isDarkMode ? "#ffffff" : "#000000", // Hover primary color
         },
       }}
     >

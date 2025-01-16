@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Form, Input, Button } from "antd";
+import { Form, Input, Button, Modal } from "antd";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -20,6 +20,8 @@ export default function Home() {
   const [location, setLocation] = useState({ lat: 13.736717, lng: 100.523186 }); // Default: Bangkok
   const [markerPosition, setMarkerPosition] = useState(location);
   const [isDarkMode, setIsDarkMode] = useState(false); // Detect system theme
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   // Detect system theme
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function Home() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate a 2-second delay
       console.log("Submission complete!");
+      showModal();
     } catch (error) {
       console.error("Error during submission:", error);
     } finally {
@@ -70,6 +73,20 @@ export default function Home() {
     form.resetFields();
     setMarkerPosition(location); // Reset map marker to default location
   };
+
+  const handleOk = () => {
+    setIsModalOpen(false);
+  }
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  }
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  }
+
+
 
   return (
     <div
@@ -127,30 +144,32 @@ export default function Home() {
         </Form.Item>
 
         {/* Location: Latitude */}
-        <Form.Item
+        {/* <Form.Item
           name="latitude"
           label="Latitude"
           rules={[{ required: true, message: "Please select a location on the map!" }]}
         >
           <Input
+            disabled = {true}
             readOnly
             placeholder="Latitude will auto-fill on map click"
             className={isDarkMode ? "bg-gray-700 text-gray-300" : ""}
           />
-        </Form.Item>
+        </Form.Item> */}
 
         {/* Location: Longitude */}
-        <Form.Item
+        {/* <Form.Item
           name="longitude"
           label="Longitude"
           rules={[{ required: true, message: "Please select a location on the map!" }]}
         >
           <Input
+            disabled = {true}
             readOnly
             placeholder="Longitude will auto-fill on map click"
             className={isDarkMode ? "bg-gray-700 text-gray-300" : ""}
           />
-        </Form.Item>
+        </Form.Item> */}
 
         {/* Map */}
         <div className="mb-6">
@@ -172,7 +191,7 @@ export default function Home() {
         {/* Submit and Reset Buttons */}
         <Form.Item>
           <div className="flex justify-between">
-            <Button type="primary" htmlType="submit" loading={loading}>
+            <Button type="default" variant="filled" htmlType="submit" loading={loading}>
               {loading ? "Submitting..." : "Submit"}
             </Button>
             <Button htmlType="button" onClick={handleReset}>
@@ -181,6 +200,11 @@ export default function Home() {
           </div>
         </Form.Item>
       </Form>
+      <Modal  title="Basic Modal"  open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer = {null}>
+        <p>Some contents...</p>
+        <p>Some contents...</p>
+        <p>Some contents...</p>
+      </Modal>
     </div>
   );
 }
