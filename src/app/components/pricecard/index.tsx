@@ -1,20 +1,49 @@
 import React from 'react';
 import { Card } from 'antd';
+import clsx from 'clsx';
+
+export interface HouseProps {
+    lat: string;
+    long: string;
+    area: string;
+    price: string;
+}
+
+export interface CardHouseProps {
+    data: HouseProps;
+    isDarkMode: boolean;
+}
 
 
-
-
-export default function CardHouse() {
+export default function CardHouse({data,isDarkMode}: CardHouseProps) {
     return (
         <Card
         title=""
-        style={{ width: 300 }}
+        className={clsx
+            ('w-full',
+                {
+                    "!border-black": !isDarkMode,
+                    "!border-white": isDarkMode,
+                }
+            )
+        }
         >
-            <p>House</p>
-            <p>Lat</p>
-            <p>Long</p>
-            <p>Area</p>
-            <p>Price</p>
+            <div className='flex justify-between '>
+                <p>Latitude</p>
+                <p>{data.lat}</p>
+            </div>
+            <div className='flex justify-between'>
+                <p>Longitude</p>
+                <p>{data.long}</p>
+            </div>
+            <div className='flex justify-between'>
+                <p>Area</p>
+                <p>{data.area}</p>
+            </div>
+            <div className='flex justify-between'>
+                <p>Price</p>
+                <p>{data.price}</p>
+            </div>
         </Card>
     );
 }

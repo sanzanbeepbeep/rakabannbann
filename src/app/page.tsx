@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation"; // Import from next/navigation
 import { Button, ConfigProvider } from "antd";
+import { FaHouse } from "react-icons/fa6";
+
 
 export default function Home() {
   const router = useRouter(); // Initialize useRouter from next/navigation
@@ -14,7 +16,10 @@ export default function Home() {
     <ConfigProvider>
       <div className="relative flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center justify-center w-3/4 text-center font-mono">
-          <h1 className="text-6xl font-bold mb-4">RakaBaanBaan</h1>
+          <div className="flex flex-row items-end justify-center mb-4 gap-4">
+            <h1 className="text-6xl font-bold">RakaBaanBaan</h1>
+            <FaHouse size={100} className="animate-bounce" />
+          </div>
           <h2 className="text-2xl font-semibold mb-6">
             Your Intelligent House Price Prediction Tool
           </h2>

@@ -9,12 +9,14 @@ import {
   Modal,
   Statistic,
   StatisticProps,
+  AutoComplete,
 } from "antd";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import CardHouse from "../components/pricecard";
+import CardHouse, { HouseProps } from "../components/pricecard";
 import CountUp from "react-countup";
+
 
 // Fixes Leaflet default marker icon issue in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -34,6 +36,72 @@ export default function Home() {
   const [markerPosition, setMarkerPosition] = useState(location);
   const [isDarkMode, setIsDarkMode] = useState(false); // Detect system theme
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Mock data for card
+  const cardData:HouseProps[] = [
+    {
+      lat: "13.736717",
+      long: "100.523186",
+      area: "100 sq.m",
+      price: "10,000,000 THB", // 100 sq.m * 100,000 THB/m²
+    },
+    {
+      lat: "13.737832",
+      long: "100.523711",
+      area: "120 sq.m",
+      price: "15,600,000 THB", // 120 sq.m * 130,000 THB/m²
+    },
+    {
+      lat: "13.738947",
+      long: "100.524236",
+      area: "90 sq.m",
+      price: "10,800,000 THB", // 90 sq.m * 120,000 THB/m²
+    },
+    {
+      lat: "13.739610",
+      long: "100.525100",
+      area: "150 sq.m",
+      price: "27,000,000 THB", // 150 sq.m * 180,000 THB/m²
+    },
+    {
+      lat: "13.735982",
+      long: "100.522630",
+      area: "110 sq.m",
+      price: "13,200,000 THB", // 110 sq.m * 120,000 THB/m²
+    },
+    {
+      lat: "13.734866",
+      long: "100.522105",
+      area: "95 sq.m",
+      price: "9,975,000 THB", // 95 sq.m * 105,000 THB/m²
+    },
+    {
+      lat: "13.733750",
+      long: "100.521580",
+      area: "105 sq.m",
+      price: "15,750,000 THB", // 105 sq.m * 150,000 THB/m²
+    },
+    {
+      lat: "13.732634",
+      long: "100.521055",
+      area: "130 sq.m",
+      price: "23,400,000 THB", // 130 sq.m * 180,000 THB/m²
+    },
+    {
+      lat: "13.731518",
+      long: "100.520530",
+      area: "140 sq.m",
+      price: "21,000,000 THB", // 140 sq.m * 150,000 THB/m²
+    },
+    {
+      lat: "13.730402",
+      long: "100.520005",
+      area: "115 sq.m",
+      price: "12,650,000 THB", // 115 sq.m * 110,000 THB/m²
+    },
+  ];
+  
+
 
   // Detect system theme
   useEffect(() => {
@@ -165,6 +233,21 @@ export default function Home() {
           />
         </Form.Item>
 
+        <Form.Item
+          name="villageName"
+          label="Village Name"
+          rules={[{ required: false, message: "Please enter the village name!" }]}
+        >
+          <AutoComplete
+            placeholder="Enter village name"
+            className={isDarkMode ? "text-gray-300" : ""}
+            style={{ width: "100%" 
+                    
+            }}
+          />
+        </Form.Item>
+
+
         {/* Location: Latitude */}
         <Form.Item
           name="latitude"
@@ -240,11 +323,20 @@ export default function Home() {
       >
         <Statistic
           title="Price"
-          value={69696969}
+          // value = mean of the first 3 prices
+          value={Math.round(cardData.slice(0,3).reduce((acc, data) => acc + parseInt(data.price.replace(/,/g, ""),  10), 0) / 3)}
           prefix="Baht"
           formatter={formatter}
         />
-        <CardHouse />
+        
+        <h2 className="text-lg font-semibold mt-4">Similar Properties</h2>
+
+        <div className="grid grid-cols-1 gap-4 mt-4">
+          {cardData.splice(0,3).map((data, index) => (
+            <CardHouse key={index} data={data} isDarkMode={isDarkMode} />
+          ))}
+        </div>
+
       </Modal>
     </div>
   );

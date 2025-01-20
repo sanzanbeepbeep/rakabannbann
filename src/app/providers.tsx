@@ -32,13 +32,19 @@ export function Providers({
       theme={{
         token: {
           colorPrimary: isDarkMode ? "#000000" : "#ffffff", // Dynamic primary color
-          colorBgBase: isDarkMode ? "#000000" : "#ffffff", // Background color
+          colorBgBase: isDarkMode ? "#3F3F46" : "#ffffff", // Background color
           colorTextBase: isDarkMode ? "#ffffff" : "#000000", // Text color
-          colorPrimaryHover: isDarkMode ? "#ffffff" : "#000000", // Hover primary color
+          colorPrimaryHover: isDarkMode ? "#8C9BAB" : "#000000", // Hover primary color
+          
         },
         components: {
           InputNumber:{
-            activeBorderColor: isDarkMode ? "#ffffff" : "#000000",
+            activeBorderColor: isDarkMode ? "#8C9BAB" : "#000000",
+            activeShadow: isDarkMode ? "" : "",
+          },
+          Select:{
+            activeBorderColor: isDarkMode ? "#8C9BAB" : "#000000",
+            borderRadius: isDarkMode ? "8px" : "8px",
           }
         }
       }}
