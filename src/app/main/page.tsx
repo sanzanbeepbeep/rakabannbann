@@ -8,17 +8,15 @@ import {
   Button,
   Modal,
   Statistic,
-  StatisticProps,
   AutoComplete,
 } from "antd";
+import axios from "axios";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import CardHouse, { HouseProps } from "../components/pricecard";
 import CountUp from "react-countup";
 
-
-// Fixes Leaflet default marker icon issue in React
+// Fix Leaflet Marker Icon Issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -31,102 +29,45 @@ L.Icon.Default.mergeOptions({
 
 export default function Home() {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false); // Loading state for the submit button
-  const [location, setLocation] = useState({ lat: 13.736717, lng: 100.523186 }); // Default: Bangkok
+  const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState({ lat: 13.736717, lng: 100.523186 });
   const [markerPosition, setMarkerPosition] = useState(location);
-  const [isDarkMode, setIsDarkMode] = useState(false); // Detect system theme
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Mock data for card
-  const cardData:HouseProps[] = [
-    {
-      lat: "13.736717",
-      long: "100.523186",
-      area: "100 sq.m",
-      price: "10,000,000 THB", // 100 sq.m * 100,000 THB/m²
-    },
-    {
-      lat: "13.737832",
-      long: "100.523711",
-      area: "120 sq.m",
-      price: "15,600,000 THB", // 120 sq.m * 130,000 THB/m²
-    },
-    {
-      lat: "13.738947",
-      long: "100.524236",
-      area: "90 sq.m",
-      price: "10,800,000 THB", // 90 sq.m * 120,000 THB/m²
-    },
-    {
-      lat: "13.739610",
-      long: "100.525100",
-      area: "150 sq.m",
-      price: "27,000,000 THB", // 150 sq.m * 180,000 THB/m²
-    },
-    {
-      lat: "13.735982",
-      long: "100.522630",
-      area: "110 sq.m",
-      price: "13,200,000 THB", // 110 sq.m * 120,000 THB/m²
-    },
-    {
-      lat: "13.734866",
-      long: "100.522105",
-      area: "95 sq.m",
-      price: "9,975,000 THB", // 95 sq.m * 105,000 THB/m²
-    },
-    {
-      lat: "13.733750",
-      long: "100.521580",
-      area: "105 sq.m",
-      price: "15,750,000 THB", // 105 sq.m * 150,000 THB/m²
-    },
-    {
-      lat: "13.732634",
-      long: "100.521055",
-      area: "130 sq.m",
-      price: "23,400,000 THB", // 130 sq.m * 180,000 THB/m²
-    },
-    {
-      lat: "13.731518",
-      long: "100.520530",
-      area: "140 sq.m",
-      price: "21,000,000 THB", // 140 sq.m * 150,000 THB/m²
-    },
-    {
-      lat: "13.730402",
-      long: "100.520005",
-      area: "115 sq.m",
-      price: "12,650,000 THB", // 115 sq.m * 110,000 THB/m²
-    },
-  ];
-  
-
-
+  const [prediction, setPrediction] = useState(0);
+  const [nearbyHouses, setNearbyHouses] = useState([]);
+  const [error, setError] = useState("");
+  const [villages, setVillages] = useState([]);
   // Detect system theme
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     setIsDarkMode(mediaQuery.matches);
-
-    // Listen for theme changes
-    const handleThemeChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleThemeChange);
-    return () => {
-      mediaQuery.removeEventListener("change", handleThemeChange);
-    };
+    mediaQuery.addEventListener("change", (e) => setIsDarkMode(e.matches));
+    return () => mediaQuery.removeEventListener("change", () => {});
   }, []);
 
-  // Handle location change on map click
+  useEffect(() => {
+    const fetchVillages = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/villages");
+        setVillages(
+          response.data.villages.map((village: string) => ({ value: village }))
+        );
+      } catch (error) {
+        console.error("Error fetching villages:", error);
+      }
+    };
+
+    fetchVillages();
+  }, []);
+
   const LocationMarker = () => {
     useMapEvents({
       click(e) {
         setMarkerPosition(e.latlng);
         form.setFieldsValue({
           latitude: e.latlng.lat.toFixed(6),
-          longitude: e.latlng.lng.toFixed(6),
+          longtitude: e.latlng.lng.toFixed(6),
         });
       },
     });
@@ -134,41 +75,43 @@ export default function Home() {
   };
 
   const handleSubmit = async (values: any) => {
-    setLoading(true); // Start loading
-    console.log("Form Values:", values);
+    setLoading(true);
+    setError("");
+    setNearbyHouses([]);
 
-    // Simulate an async operation (e.g., API call)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate a 2-second delay
-      console.log("Submission complete!");
-      showModal();
-    } catch (error) {
-      console.error("Error during submission:", error);
+      // Fetch predicted price
+      const response = await axios.post(
+        "http://127.0.0.1:8000/predict",
+        values,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      setPrediction(response.data.predicted_price);
+      await handleGetNearbyHouses(values); // Fetch nearby houses after prediction
+      setIsModalOpen(true);
+    } catch (err) {
+      setError("Error making prediction. Please check your input.");
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
-  const handleReset = () => {
-    form.resetFields();
-    setMarkerPosition(location); // Reset map marker to default location
-  };
+  const handleGetNearbyHouses = async (values: any) => {
+    try {
+      const response = await axios.post("http://127.0.0.1:8000/near", values, {
+        headers: { "Content-Type": "application/json" },
+      });
 
-  const handleOk = () => {
-    setIsModalOpen(false);
+      if (response.data.near_houses) {
+        setNearbyHouses(response.data.near_houses);
+      }
+    } catch (err) {
+      console.error("Error fetching nearby houses:", err);
+    }
   };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
-
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const formatter: StatisticProps["formatter"] = (value) => (
-    <CountUp end={value as number} duration={2} separator="," />
-  );
 
   return (
     <div
@@ -188,155 +131,150 @@ export default function Home() {
           Property Details
         </h1>
 
-        {/* Land Area */}
         <Form.Item
-          name="landArea"
+          name="land_area"
           label="Land Area (sq.m)"
-          rules={[{ required: true, message: "Please enter the land area!" }]}
+          rules={[{ required: true, message: "Enter land area!" }]}
         >
           <InputNumber
             min={1}
-            keyboard={false}
+            style={{ width: "100%" }}
             placeholder="Enter land area"
-            className={isDarkMode ? "bg-zinc-700 text-gray-300" : ""}
-            style={{ width: "100%" }}
           />
         </Form.Item>
 
-        {/* House Area */}
         <Form.Item
-          name="houseArea"
+          name="building_area"
           label="House Area (sq.m)"
-          rules={[{ required: true, message: "Please enter the house area!" }]}
+          rules={[{ required: true, message: "Enter house area!" }]}
         >
           <InputNumber
             min={1}
-            keyboard={false}
+            style={{ width: "100%" }}
             placeholder="Enter house area"
-            className={isDarkMode ? "bg-zinc-700 text-gray-300" : ""}
-            style={{ width: "100%" }}
           />
         </Form.Item>
 
-        {/* House Age */}
         <Form.Item
-          name="houseAge"
-          label="House Age (years)"
-          rules={[{ required: true, message: "Please enter the house age!" }]}
+          name="building_age"
+          label="House Age"
+          rules={[{ required: true, message: "Enter house age!" }]}
         >
           <InputNumber
             min={1}
-            keyboard={false}
-            placeholder="Enter house age"
-            className={isDarkMode ? "bg-zinc-700 text-gray-300" : ""}
             style={{ width: "100%" }}
+            placeholder="Enter house age"
           />
         </Form.Item>
 
         <Form.Item
-          name="villageName"
-          label="Village Name"
-          rules={[{ required: false, message: "Please enter the village name!" }]}
+          name="no_of_floor"
+          label="Number of Floors"
+          rules={[{ required: true, message: "Enter number of floors!" }]}
         >
-          <AutoComplete
-            placeholder="Enter village name"
-            className={isDarkMode ? "text-gray-300" : ""}
-            style={{ width: "100%" 
-                    
-            }}
+          <InputNumber
+            min={1}
+            style={{ width: "100%" }}
+            placeholder="Enter number of floors"
           />
         </Form.Item>
 
+        <Form.Item
+          name="village"
+          label="Village"
+          rules={[{ required: true, message: "Select a village!" }]}
+        >
+          <AutoComplete options={villages} placeholder="Select a village" />
+        </Form.Item>
 
-        {/* Location: Latitude */}
         <Form.Item
           name="latitude"
           label="Latitude"
-          rules={[
-            { required: true, message: "Please select a location on the map!" },
-          ]}
+          rules={[{ required: true, message: "Select a location on the map!" }]}
         >
-          <Input
-            disabled={true}
-            readOnly
-            placeholder="Latitude will auto-fill on map click"
-            className={isDarkMode ? "bg-zinc-700 text-gray-300" : ""}
-          />
+          <Input readOnly placeholder="Latitude will auto-fill on map click" />
         </Form.Item>
 
-        {/* Location: Longitude */}
         <Form.Item
-          name="longitude"
+          name="longtitude"
           label="Longitude"
-          rules={[
-            { required: true, message: "Please select a location on the map!" },
-          ]}
+          rules={[{ required: true, message: "Select a location on the map!" }]}
         >
-          <Input
-            disabled={true}
-            readOnly
-            placeholder="Longitude will auto-fill on map click"
-            className={isDarkMode ? "bg-zinc-700 text-gray-300" : ""}
-          />
+          <Input readOnly placeholder="Longitude will auto-fill on map click" />
         </Form.Item>
 
-        {/* Map */}
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-2">Mark Location on Map</h3>
           <MapContainer
             center={location}
             zoom={13}
             style={{ height: "300px", width: "100%" }}
-            className="rounded"
           >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <LocationMarker />
           </MapContainer>
         </div>
 
-        {/* Submit and Reset Buttons */}
+        {error && <p className="text-red-500">{error}</p>}
+
         <Form.Item>
-          <div className="flex justify-between">
-            <Button
-              type="default"
-              variant="filled"
-              htmlType="submit"
-              loading={loading}
-            >
+          <div className="flex justify-between w-full">
+            <Button type="dashed" htmlType="submit" loading={loading}>
               {loading ? "Submitting..." : "Submit"}
             </Button>
-            <Button htmlType="button" onClick={handleReset}>
+            <Button
+              type="dashed"
+              onClick={() => form.resetFields()}
+              className="ml-auto"
+            >
               Reset
             </Button>
           </div>
         </Form.Item>
+
+        <p className="text-center text-xs text-gray-500 mt-4">
+          <strong>Note:</strong> The predicted price is an estimate and may
+          vary. The nearby houses are based on the location you selected.
+        </p>
       </Form>
+
       <Modal
         title="Estimated Price"
         open={isModalOpen}
-        onOk={handleOk}
-        onCancel={handleCancel}
+        onCancel={() => setIsModalOpen(false)}
         footer={null}
       >
         <Statistic
-          title="Price"
-          // value = mean of the first 3 prices
-          value={Math.round(cardData.slice(0,3).reduce((acc, data) => acc + parseInt(data.price.replace(/,/g, ""),  10), 0) / 3)}
-          prefix="Baht"
-          formatter={formatter}
+          title="Predicted Price (THB)"
+          value={prediction}
+          formatter={(value) => (
+            <CountUp end={value} duration={2} separator="," />
+          )}
         />
-        
-        <h2 className="text-lg font-semibold mt-4">Similar Properties</h2>
 
-        <div className="grid grid-cols-1 gap-4 mt-4">
-          {cardData.splice(0,3).map((data, index) => (
-            <CardHouse key={index} data={data} isDarkMode={isDarkMode} />
-          ))}
-        </div>
-
+        <h3 className="mt-4 text-lg font-bold">Nearby Houses:</h3>
+        {nearbyHouses.length > 0 ? (
+          <ul>
+            {nearbyHouses.map((house, index) => (
+              <li key={index} className="mt-2 p-2 border rounded-lg">
+                <p>
+                  <strong>Distance:</strong> {house.distance.toFixed(2)} meters
+                </p>
+                <p>
+                  <strong>Price:</strong> {house.price.toLocaleString()} THB
+                </p>
+                <p>
+                  <strong>Land Area:</strong> {house.land_area} sq.m
+                </p>
+                <p>
+                  <strong>Building Area:</strong> {house.building_area} sq.m
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No nearby houses found.</p>
+        )}
       </Modal>
     </div>
   );

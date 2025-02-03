@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "antd": "^5.22.6",
+    "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",
     "motion": "^11.18.0",
